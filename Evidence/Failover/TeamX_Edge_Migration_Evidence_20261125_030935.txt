@@ -1,0 +1,93 @@
+TEAM X - EDGE MIGRATION EVIDENCE
+Wed Nov 25 03:09:36 IST 2026
+
+===== PRIMARY DNS =====
+
+; <<>> DiG 9.10.6 <<>> @10.7.25.77 app.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamX.test.		60	IN	A	10.7.25.77
+
+; <<>> DiG 9.10.6 <<>> @10.7.25.77 api.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+api.teamX.test.		60	IN	A	10.7.25.77
+
+===== BACKUP DNS =====
+
+; <<>> DiG 9.10.6 <<>> @10.7.2.16 app.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamX.test.		60	IN	A	10.7.25.77
+
+; <<>> DiG 9.10.6 <<>> @10.7.2.16 api.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+api.teamX.test.		60	IN	A	10.7.25.77
+
+===== PRIMARY EDGE =====
+HTTP/2 200 
+server: nginx/1.31.6
+date: Tue, 24 Nov 2026 21:39:37 GMT
+content-type: application/json; charset=utf-8
+content-length: 75
+x-powered-by: Express
+x-backend: B
+cache-control: no-store
+etag: W/"4b-7u0mlb7JgzBQ+k/UZtQI0o9qt+I"
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5002
+
+{"backend":"B","status":"ok","port":5002,"time":"2026-11-24T21:39:37.963Z"}
+===== STANDBY EDGE =====
+HTTP/1.1 200 OK
+Server: nginx/1.31.10
+Date: Tue, 24 Nov 2026 21:39:38 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 75
+Connection: keep-alive
+X-Powered-By: Express
+X-Backend: A
+Cache-Control: no-store
+ETag: W/"4b-dSLIJRL4RVye30978g3/kJ4f//w"
+X-Edge: mac3-standby
+X-Upstream: 127.0.0.1:5001
+
+{"backend":"A","status":"ok","port":5001,"time":"2026-11-24T21:39:38.128Z"}
+===== PRIMARY LOAD BALANCING =====
+Request 1
+HTTP/2 200 
+x-backend: A
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5001
+Request 2
+HTTP/2 200 
+x-backend: B
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5002
+Request 3
+HTTP/2 200 
+x-backend: A
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5001
+Request 4
+HTTP/2 200 
+x-backend: B
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5002
+Request 5
+HTTP/2 200 
+x-backend: A
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5001
+Request 6
+HTTP/2 200 
+x-backend: B
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5002
+
+===== PREVIOUSLY VERIFIED OUTAGE TEST =====
+Mac 2 nginx stopped; port 443 had no listener.
+Six HTTPS requests succeeded through mac3-standby.
+Backend A: 3 responses. Backend B: 3 responses.
+Mac 2 nginx subsequently restarted successfully.
