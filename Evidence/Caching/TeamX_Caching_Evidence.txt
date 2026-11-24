@@ -1,0 +1,26 @@
+TEAM X - HTTP CACHING EVIDENCE
+Date: 25 November 2026
+
+1. Backend A and B root endpoints:
+   HTTP 200
+   Cache-Control: max-age=60
+   ETag generated
+
+2. Backend A and B status endpoints:
+   HTTP 200
+   Cache-Control: no-store
+
+3. HTTPS through nginx:
+   HTTP/2 200
+   Cache-Control: max-age=60
+   X-Edge: mac2-primary
+
+4. Conditional request:
+   If-None-Match sent with matching ETag
+   HTTP/1.1 304 Not Modified
+   Cache-Control: max-age=60
+
+Conclusion:
+The project demonstrates client-cache freshness policy,
+no-store protection for dynamic status responses, and
+ETag-based conditional validation.
