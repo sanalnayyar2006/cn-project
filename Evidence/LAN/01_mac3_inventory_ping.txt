@@ -1,0 +1,14 @@
+=== 2026-11-24 23:46:40 | Sanals-MacBook-Pro | Mac 3 inventory ===
+IP: 10.7.2.16
+Mask: 255.255.224.0
+Gateway: 10.7.0.1
+MAC: ce:e7:b5:22:8e:44
+DNS now: 10.7.20.168
+PING 10.7.25.77 (10.7.25.77): 56 data bytes
+64 bytes from 10.7.25.77: icmp_seq=0 ttl=64 time=7.251 ms
+64 bytes from 10.7.25.77: icmp_seq=1 ttl=64 time=11.078 ms
+64 bytes from 10.7.25.77: icmp_seq=2 ttl=64 time=55.883 ms
+
+--- 10.7.25.77 ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 7.251/24.737/55.883/22.079 ms

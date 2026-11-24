@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team X Phase 2 Report</title>
+<style>
+  @page { size: A4; margin: 19mm 14.3mm 22mm 14.3mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 10pt; line-height: 1.18; color: #000; background: #fff; margin: 0; }
+  .page { max-width: 181.4mm; margin: 0 auto; }
+
+  /* Title block */
+  h1.title { font-size: 22pt; font-weight: normal; text-align: center; line-height: 1.15; margin: 0 0 3mm; }
+  .subtitle { text-align: center; font-size: 11pt; font-style: italic; margin: 0 0 4mm; }
+  .authors { display: flex; justify-content: space-around; text-align: center; font-size: 10pt; margin-bottom: 2mm; }
+  .authors div { flex: 1; }
+  .authors .name { font-size: 11pt; }
+  .affil { text-align: center; font-size: 9pt; font-style: italic; margin-bottom: 5mm; }
+
+  /* Two-column body */
+  .cols { column-count: 2; column-gap: 4.22mm; column-fill: balance; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  .span { column-span: all; margin: 3mm 0 4mm; }
+  p { margin: 0; text-indent: 1em; }
+  p.noindent, h2 + p, h3 + p, .abstract p { text-indent: 0; }
+  .abstract, .keywords { font-size: 9pt; font-weight: bold; margin-bottom: 2.4mm; text-indent: 0; }
+  .abstract i, .keywords i { font-weight: bold; }
+
+  h2 { font-size: 10pt; font-weight: normal; font-variant: small-caps; text-align: center; margin: 4mm 0 1.6mm; letter-spacing: .02em; break-after: avoid; }
+  h3 { font-size: 10pt; font-weight: normal; font-style: italic; margin: 2.4mm 0 1mm; break-after: avoid; }
+  ul, ol { margin: 0.6mm 0 0.6mm 0; padding-left: 5mm; }
+  li { margin: 0.3mm 0; }
+
+  /* Tables */
+  .tbl { break-inside: avoid; margin: 2.4mm 0 3mm; }
+  .tcap { text-align: center; font-size: 8pt; font-variant: small-caps; margin-bottom: 1mm; line-height: 1.25; }
+  table { border-collapse: collapse; width: 100%; font-size: 7.6pt; line-height: 1.2; text-align: left; }
+  th, td { padding: 0.7mm 1.1mm; vertical-align: top; }
+  thead th { border-top: 1px solid #000; border-bottom: 0.6px solid #000; font-weight: bold; }
+  tbody tr:last-child td { border-bottom: 1px solid #000; }
+  td.c, th.c { text-align: center; }
+  .pass { font-weight: bold; }
+  .pend { font-style: italic; }
+
+  /* Figures */
+  figure { margin: 2.4mm 0 3mm; break-inside: avoid; text-align: center; }
+  figcaption { font-size: 8pt; text-align: justify; margin-top: 1.2mm; }
+  svg { max-width: 100%; height: auto; }
+  svg text { font-family: "Times New Roman", Times, serif; }
+
+  /* Code */
+  pre { font-family: Menlo, "Courier New", monospace; font-size: 6.8pt; line-height: 1.22; background: #f3f3f3; border-left: 2px solid #999; padding: 1.2mm 1.6mm; margin: 1.6mm 0 2.4mm; white-space: pre-wrap; word-break: break-word; break-inside: avoid; text-align: left; }
+  code { font-family: Menlo, "Courier New", monospace; font-size: 8pt; hyphens: none; -webkit-hyphens: none; }
+  .lcap { font-size: 8pt; text-align: center; margin-top: 1.6mm; }
+
+  .refs { font-size: 8pt; text-indent: 0; }
+  .refs ol { padding-left: 6mm; }
+  .refs li { margin: 0.5mm 0; text-align: left; }
+  .ph { background: #fff3a0; }
+  @media print { .ph { background: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1 class="title">Hardening, Failure Recovery and Packet-Level Verification of a Private Network Service Platform</h1>
+<div class="subtitle">Computer Networks Course Project: Phase 2 Final Report (Team X)</div>
+
+<div class="authors">
+  <div><span class="name">Aarsh</span><br><span class="ph">[Roll Number]</span><br>Mac 2: Edge, TLS, Primary DNS</div>
+  <div><span class="name">Sanal</span><br><span class="ph">[Roll Number]</span><br>Mac 3: Backends, Backup DNS, PF, Standby Edge</div>
+  <div><span class="name">Anurag</span><br><span class="ph">[Roll Number]</span><br>Mac 1 role (combined into Mac 2)</div>
+</div>
+<div class="affil"><span class="ph">[Department of Computer Science and Engineering, University Name, City]</span> &middot; Faculty: <span class="ph">[Faculty Name]</span> &middot; 25 November 2026</div>
+
+<div class="cols">
+
+<p class="abstract"><i>Abstract</i>&mdash;This report describes the Phase 2 extensions of a private, fully local network service platform built on two macOS hosts. A client resolves <code>app.teamX.test</code> through team-operated dnsmasq servers, opens an HTTPS connection to an nginx edge that terminates TLS 1.3, and is load-balanced across two Express.js backends. Phase 2 added a backup DNS resolver, TTL observation, backend isolation using the macOS packet filter (PF), passive upstream failover in nginx, and a standby edge reached by a DNS-based cutover. Controlled failure experiments showed that all 6 of 6 requests succeeded while Backend A was down, and the <code>X-Upstream</code> header made one nginx retry visible. Round-robin distribution resumed after recovery, and 6 of 6 requests were served by the standby edge while the primary edge was stopped. A packet capture of 3,859 frames traces one request end to end: DNS (frames 2209&ndash;2210), the TCP handshake (2219&ndash;2221), TLS 1.3 (2222&ndash;2226), and the plaintext proxied request to Backend B (2243&ndash;2247). That request takes 218.7&nbsp;ms from DNS query to the encrypted response. The report also states which requirements remain partially verified: automatic operating-system DNS fallback, an unauthorized-source test from a third device, and the TTL-delayed cutover of a cached client.</p>
+
+<p class="keywords"><i>Index Terms</i>&mdash;DNS, TTL, reverse proxy, load balancing, TLS 1.3, packet filter, high availability, failover, Wireshark, troubleshooting.</p>
+
+<h2>I. Introduction</h2>
+<p>The course project asks each team to build a small private service environment in which "the application stays simple and the network is the project." Phase 1 delivered the working path: private DNS, two REST backends, an nginx reverse proxy and load balancer, HTTPS with a locally issued certificate, HTTP caching headers, and packet-level evidence. Phase 2 extends the same infrastructure, without rebuilding it, to answer a different question: <em>how does the system behave when parts of it fail, and can each failure be attributed to the correct layer?</em></p>
+<p>The Phase 2 objectives were to (A) add a backup DNS resolver, (B) observe TTL-governed caching during a record change, (C) restrict backend ports to the edge only, (D) fail over automatically between backends, (E) migrate traffic to a standby edge using DNS, and (F) diagnose an injected fault layer by layer. Section II lists the changes from Phase 1. Section III presents the architecture, Section IV the implementation, Section V the test method and Section VI the results, including frame-level packet analysis. Sections VII&ndash;X cover troubleshooting, learning, limitations and conclusions.</p>
+
+<h2>II. Changes from Phase 1</h2>
+<p class="noindent">Table I summarizes the delta. The main change is the move from proving that the system <em>works</em> to measuring how it behaves when components are removed.</p>
+
+<div class="tbl">
+<div class="tcap">Table I<br>Phase 1 Baseline Versus Phase 2 Extension</div>
+<table>
+<thead><tr><th>Area</th><th>Phase 1</th><th>Phase 2</th></tr></thead>
+<tbody>
+<tr><td>DNS</td><td>Single private resolver</td><td>Primary (Mac 2) + backup (Mac 3), TTL 60 s</td></tr>
+<tr><td>Edge</td><td>One nginx edge</td><td>Primary edge + standby edge (Mac 3)</td></tr>
+<tr><td>Upstreams</td><td>Round robin, no failure handling</td><td><code>max_fails=1</code>, <code>fail_timeout=10s</code>, <code>proxy_next_upstream</code> (2 tries, 3 s)</td></tr>
+<tr><td>Port 80</td><td>Proxied plain HTTP</td><td>301 redirect to HTTPS; HTTP/2 on 443</td></tr>
+<tr><td>Backends</td><td><code>GET /</code></td><td>+ <code>GET /api/status</code> (<code>no-store</code>)</td></tr>
+<tr><td>TLS</td><td>Self-signed, CN only</td><td>Local CA, SAN for app/api, TLS 1.3</td></tr>
+<tr><td>Isolation</td><td>None</td><td>PF anchor: 5001/5002 from Mac 2 only</td></tr>
+<tr><td>Evidence</td><td>Basic captures</td><td>Frame-numbered trace, per-test logs</td></tr>
+</tbody></table>
+</div>
+
+<h2>III. System Architecture</h2>
+<h3>A. Topology and Roles</h3>
+<p>Both hosts are on one Wi-Fi LAN, 10.7.0.0/19 (mask 255.255.224.0, gateway 10.7.0.1). The course permits teams of two to three to combine machine roles, so the Mac 1 DNS role runs on Mac 2, and Mac 3 hosts both backends, as shown in Fig. 1. The DNS and edge roles therefore share one physical host. This is an explicit single point of failure, addressed in Section VI-E.</p>
+
+<figure class="span">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Network topology">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+  <!-- LAN bus -->
+  <rect x="20" y="138" width="680" height="24" fill="#e9e9e9" stroke="#000" stroke-width="1"/>
+  <text x="360" y="154" font-size="12" text-anchor="middle">Wi-Fi LAN 10.7.0.0/19 &#183; gateway 10.7.0.1 (router)</text>
+  <!-- Mac 2 -->
+  <rect x="40" y="10" width="300" height="112" fill="#fff" stroke="#000" stroke-width="1.4"/>
+  <text x="190" y="30" font-size="14" font-weight="bold" text-anchor="middle">Mac 2: Edge (Aarsh) &#183; 10.7.25.77</text>
+  <text x="56" y="52" font-size="12">&#8226; nginx primary edge: TCP 443 (TLS 1.3, HTTP/2), 80 &#8594; 301</text>
+  <text x="56" y="70" font-size="12">&#8226; dnsmasq primary DNS: UDP/TCP 53 (Mac 1 role)</text>
+  <text x="56" y="88" font-size="12">&#8226; TeamX Local CA, server certificate</text>
+  <text x="56" y="106" font-size="11" font-style="italic">Cloud analogue: ALB / CDN edge + Route 53</text>
+  <!-- Mac 3 -->
+  <rect x="380" y="10" width="300" height="112" fill="#fff" stroke="#000" stroke-width="1.4"/>
+  <text x="530" y="30" font-size="14" font-weight="bold" text-anchor="middle">Mac 3: Backends (Sanal) &#183; 10.7.2.16</text>
+  <text x="396" y="52" font-size="12">&#8226; Backend A: TCP 5001 &#183; Backend B: TCP 5002</text>
+  <text x="396" y="70" font-size="12">&#8226; dnsmasq backup DNS: 53 &#183; standby nginx: 443</text>
+  <text x="396" y="88" font-size="12">&#8226; PF anchor com.apple/teamx (5001/5002 from Mac 2)</text>
+  <text x="396" y="106" font-size="11" font-style="italic">Cloud analogue: EC2 instances in a target group</text>
+  <line x1="190" y1="122" x2="190" y2="138" stroke="#000" stroke-width="1.4"/>
+  <line x1="530" y1="122" x2="530" y2="138" stroke="#000" stroke-width="1.4"/>
+  <!-- Request flow -->
+  <text x="360" y="186" font-size="12.5" font-weight="bold" text-anchor="middle">Normal request path</text>
+  <rect x="20" y="198" width="120" height="40" fill="#fff" stroke="#000"/><text x="80" y="216" font-size="11" text-anchor="middle">Client (Mac 2 or 3)</text><text x="80" y="231" font-size="10" text-anchor="middle">ephemeral port</text>
+  <rect x="170" y="198" width="120" height="40" fill="#fff" stroke="#000"/><text x="230" y="216" font-size="11" text-anchor="middle">DNS 10.7.25.77</text><text x="230" y="231" font-size="10" text-anchor="middle">(backup 10.7.2.16)</text>
+  <rect x="320" y="198" width="130" height="40" fill="#fff" stroke="#000"/><text x="385" y="216" font-size="11" text-anchor="middle">nginx 10.7.25.77:443</text><text x="385" y="231" font-size="10" text-anchor="middle">TLS terminates here</text>
+  <rect x="490" y="192" width="120" height="26" fill="#fff" stroke="#000"/><text x="550" y="209" font-size="11" text-anchor="middle">Backend A :5001</text>
+  <rect x="490" y="224" width="120" height="26" fill="#fff" stroke="#000"/><text x="550" y="241" font-size="11" text-anchor="middle">Backend B :5002</text>
+  <line x1="140" y1="212" x2="168" y2="212" stroke="#000" marker-end="url(#ar)"/>
+  <line x1="168" y1="226" x2="142" y2="226" stroke="#000" marker-end="url(#ar)"/>
+  <text x="154" y="252" font-size="10" text-anchor="middle">UDP 53</text>
+  <path d="M80,238 L80,272 L385,272 L385,240" fill="none" stroke="#000" marker-end="url(#ar)"/>
+  <text x="232" y="286" font-size="10" text-anchor="middle">HTTPS: TCP 443 (encrypted)</text>
+  <line x1="450" y1="212" x2="488" y2="205" stroke="#000" marker-end="url(#ar)"/>
+  <line x1="450" y1="224" x2="488" y2="237" stroke="#000" marker-end="url(#ar)"/>
+  <text x="660" y="214" font-size="10" text-anchor="middle">plain HTTP/1.1</text>
+  <text x="660" y="228" font-size="10" text-anchor="middle">round robin</text>
+</svg>
+<figcaption>Fig. 1. Physical topology, service placement and the normal request path. The client learns only the edge address from DNS and never the backend addresses. TLS terminates at nginx, and the edge&ndash;backend hop is plaintext HTTP/1.1 on the private LAN.</figcaption>
+</figure>
+
+<h3>B. Address and Service Inventory</h3>
+<div class="tbl">
+<div class="tcap">Table II<br>Host, Interface and Service Inventory</div>
+<table>
+<thead><tr><th>Host</th><th>IPv4 / prefix</th><th>If.</th><th>MAC</th><th>Listening services</th></tr></thead>
+<tbody>
+<tr><td>Mac 2</td><td>10.7.25.77/19</td><td>en0</td><td><span class="ph">[fill]</span></td><td>nginx 1.31.6: 443, 80; dnsmasq: 53</td></tr>
+<tr><td>Mac 3</td><td>10.7.2.16/19</td><td>en0</td><td>ce:e7:b5:22:8e:44</td><td>node: 5001, 5002; dnsmasq: 53; nginx 1.31.10: 443</td></tr>
+<tr><td>Router</td><td>10.7.0.1</td><td>&ndash;</td><td>&ndash;</td><td>Default gateway</td></tr>
+</tbody></table>
+</div>
+<p>Pairwise reachability was confirmed with ICMP echo: Mac 3 &rarr; Mac 2 had 0.0% loss and a 24.7&nbsp;ms average RTT. The variance (7.3&ndash;55.9&nbsp;ms) is typical of shared campus Wi-Fi.</p>
+
+<h3>C. Protocol-to-Layer Mapping</h3>
+<div class="tbl">
+<div class="tcap">Table III<br>Layers Traversed by One Request</div>
+<table>
+<thead><tr><th>Step</th><th>Protocol</th><th>OSI / TCP-IP layer</th><th>Port</th></tr></thead>
+<tbody>
+<tr><td>Name lookup</td><td>DNS</td><td>Application</td><td>53/UDP</td></tr>
+<tr><td>Connection</td><td>TCP</td><td>Transport</td><td>eph. &rarr; 443</td></tr>
+<tr><td>Security</td><td>TLS 1.3</td><td>Session/Presentation (between L4 and L7)</td><td>443</td></tr>
+<tr><td>Request</td><td>HTTP/2 (edge), HTTP/1.1 (backend)</td><td>Application</td><td>443 / 5001&ndash;5002</td></tr>
+<tr><td>Delivery</td><td>IPv4</td><td>Network</td><td>&ndash;</td></tr>
+<tr><td>Framing</td><td>802.11 / Ethernet II</td><td>Data link</td><td>&ndash;</td></tr>
+</tbody></table>
+</div>
+
+<h2>IV. Implementation</h2>
+<h3>A. Private DNS (Extension A)</h3>
+<p>Both resolvers run dnsmasq [9] with identical project records. Non-project names are forwarded to public resolvers. A record returned from local configuration carries the <code>local-ttl</code> value, 60&nbsp;s. Listing 1 shows the backup configuration on Mac 3. The primary on Mac 2 is identical except for <code>listen-address=127.0.0.1,10.7.25.77</code>.</p>
+<pre>port=53
+no-resolv
+server=8.8.8.8
+server=1.1.1.1
+listen-address=127.0.0.1,10.7.2.16
+bind-interfaces
+interface=en0
+domain-needed
+bogus-priv
+cache-size=1000
+no-negcache
+address=/app.teamX.test/10.7.25.77
+address=/api.teamX.test/10.7.25.77
+local-ttl=60</pre>
+<div class="lcap">Listing 1. Backup dnsmasq configuration (Mac 3).</div>
+<p>On Mac 2 the client side uses a macOS <em>per-domain</em> resolver file under <code>/etc/resolver/</code> (<code>nameserver 10.7.25.77</code>, <code>nameserver 10.7.2.16</code>, <code>timeout 2</code>, <code>attempts 1</code>). <code>scutil --dns</code> shows two resolver sets: the default one (8.8.8.8, 10.5.7.1) for all other names, and the project one, in which the primary is tried first and the backup after a 2&nbsp;s timeout. Only project names are sent to the team servers, so ordinary Internet resolution does not depend on them. The <code>.test</code> suffix is reserved for testing and avoids the <code>.local</code> conflict with macOS mDNS [1], [2].</p>
+
+<h3>B. Edge Reverse Proxy and Passive Failover (Extension D)</h3>
+<p>The primary edge defines an upstream pool of both backends with passive health parameters [8], [13]:</p>
+<pre>upstream backend_pool {
+  server 10.7.2.16:5001 max_fails=1 fail_timeout=10s;
+  server 10.7.2.16:5002 max_fails=1 fail_timeout=10s;
+}
+listen 443 ssl;  http2 on;
+add_header X-Edge     mac2-primary   always;
+add_header X-Upstream $upstream_addr always;
+proxy_connect_timeout       2s;
+proxy_next_upstream error timeout http_502 http_503 http_504;
+proxy_next_upstream_tries   2;
+proxy_next_upstream_timeout 3s;</pre>
+<div class="lcap">Listing 2. Upstream and failover directives (Mac 2).</div>
+<p>One connection failure marks a server unavailable for 10&nbsp;s, and the failed request is retried on the next server, so the client does not see the error. The retry is bounded: a connect attempt is abandoned after 2&nbsp;s, and at most 2 servers are tried within 3&nbsp;s, so an unreachable host cannot stall a request indefinitely. The <code>X-Upstream</code> header exposes nginx's <code>$upstream_addr</code>. When a retry happens, this variable lists every server tried, which makes failover visible from the client side. These are <em>passive</em> checks: a server is marked unavailable only after a real request fails, and nginx does not probe it independently.</p>
+
+<h3>C. TLS Termination</h3>
+<p>A local CA (<code>CN=TeamX Local CA</code>) issued the edge certificate (<code>CN=app.teamX.test</code>). Its subjectAltName contains <code>app.teamX.test</code> and <code>api.teamX.test</code>, and it is valid from 24 Nov 2026 to 26 Dec 2027. Modern clients match the hostname against the SAN, not the CN [12]. The CA certificate was trusted in the Mac 2 System Keychain. Other clients validated against it explicitly with <code>--cacert</code>/<code>-CAfile</code>, and the insecure <code>-k</code> option was not used. The private keys were never distributed.</p>
+
+<h3>D. HTTP Caching</h3>
+<p><code>GET /</code> returns <code>Cache-Control: max-age=60</code> with an Express-generated weak ETag. <code>GET /api/status</code> returns <code>no-store</code>, because a status probe must never be served from cache [6].</p>
+
+<h3>E. Service Isolation with PF (Extension C)</h3>
+<p>Mac 3 loads the anchor <code>com.apple/teamx</code> from <code>/etc/pf.anchors/teamx</code> using one added <code>load anchor</code> line in <code>/etc/pf.conf</code> [10]:</p>
+<pre>pass in quick on en0 inet proto tcp from 10.7.25.77
+     to 10.7.2.16 port { 5001, 5002 } keep state
+block in quick on en0 inet proto tcp from any
+     to 10.7.2.16 port { 5001, 5002 }
+block in quick on en0 inet6 proto tcp from any
+     to any port { 5001, 5002 }</pre>
+<div class="lcap">Listing 3. PF anchor rules (Mac 3).</div>
+<p>Rules are evaluated in order, and <code>quick</code> stops evaluation at the first match. <code>keep state</code> lets return traffic of an allowed connection through without a separate rule. A <code>block</code> with the default drop policy produces a client <em>timeout</em>, whereas <code>block return</code> would produce an immediate RST, which the client sees as "connection refused."</p>
+
+<h3>F. Standby Edge (Extension E)</h3>
+<p>Mac 3 runs a second nginx with the same certificate. Its upstream pool points at <code>127.0.0.1:5001/5002</code>, and it identifies itself with <code>X-Edge: mac3-standby</code>. Because it reaches the backends over loopback, it does not weaken the PF isolation on <code>en0</code>.</p>
+
+<h2>V. Test Methodology</h2>
+<p>Each experiment followed a <em>baseline &rarr; fault &rarr; observation &rarr; recovery &rarr; re-verification</em> pattern. The tools used were <code>dig</code> for DNS, <code>nc -vz</code> for TCP reachability, <code>openssl s_client</code> for TLS, and <code>curl</code> for HTTP, where repeated requests were read through the <code>X-Backend</code>, <code>X-Edge</code> and <code>X-Upstream</code> headers. Packets were captured on Mac 2 with <code>tcpdump -i en0</code>, because the Wireshark GUI could not open BPF devices, and analyzed with TShark 4.6.10 and Wireshark [11]. Results were saved as timestamped text logs in the evidence directory (Appendix A). Faults were introduced only by stopping a process, editing a record or loading a rule, and every change was reverted and re-verified.</p>
+
+<h2>VI. Results</h2>
+<h3>A. Backup DNS Resolver (Extension A)</h3>
+<p>Both servers returned <code>app.teamX.test. 60 IN A 10.7.25.77</code> and the same answer for <code>api</code> (logs EM, HL). After the primary dnsmasq was stopped, direct queries to the backup continued to return the correct record, so name service survived the loss of the primary server. The macOS system resolver resolved both names in the showcase run. However, the experiment did not conclusively show that the resolver <em>switched automatically</em> from the failed primary to the backup in every case. This result is therefore reported as backup-service availability, not proven client-side failover.</p>
+<p>The two failure types differ in where the request stops. A DNS-service failure stops the request before any TCP connection exists, because the client never learns an address. An application-server failure lets resolution and the TCP/TLS connection to the edge succeed, and the failure appears one hop later as an HTTP 502.</p>
+
+<h3>B. TTL and Caching (Extension B)</h3>
+<p>Both authoritative answers carried a constant TTL of 60 on every query. A server answering from its own configuration always returns the full TTL. Countdown is a property of <em>caches</em>. This was confirmed on a forwarded record cached by the primary dnsmasq: the TTL fell 151&nbsp;&rarr;&nbsp;141&nbsp;&rarr;&nbsp;131 at 10&nbsp;s intervals (02:09:56&ndash;02:10:16), exactly one second per second. After a 135&nbsp;s wait that exceeded the remaining 131&nbsp;s, the cache returned a freshly fetched value (TTL 104, then 98), which shows expiry and refresh.</p>
+<p>During the edge migration (Section VI-E), the macOS caches were flushed manually so that the new record took effect immediately. A separately logged run, in which a <em>project</em> record is changed and a cached client keeps the old answer until its 60&nbsp;s TTL expires, remains to be recorded (Table V). In production, the same mechanism is why operators lower a record's TTL well before a migration: the time to cut traffic over is bounded by the TTL that was cached <em>before</em> the change.</p>
+
+<h3>C. Service Isolation (Extension C)</h3>
+<p>With the anchor loaded, Mac 2 reached Backend A and Backend B directly (HTTP 200 each) and through the edge (HTTP/2 200). Six HTTPS requests were split 3/3 between the backends (log FW). For the negative test, the allow rule was temporarily removed so that Mac 2 became an unauthorized source. Both connection attempts then timed out, which is consistent with a silent drop. The original rules were restored and re-verified (200, 200, HTTP/2 200). No third LAN device was available, so an unauthorized source <em>separate from the edge</em> and an IPv6 source were not tested.</p>
+
+<h3>D. Backend Failure and Recovery (Extension D)</h3>
+<p>Backend A was stopped, and a direct request to port 5001 was refused. All 6 requests through the edge then returned HTTP/2 200 from Backend B. One response carried <code>X-Upstream: 10.7.2.16:5001, 10.7.2.16:5002</code>: nginx tried A, received a connection error and retried B within the same client request (log BF). After A was restarted (direct HTTP 200), six requests returned the sequence B,&nbsp;B,&nbsp;A,&nbsp;B,&nbsp;A,&nbsp;B, all 200. The first two requests going to B is consistent with A still being inside its 10&nbsp;s <code>fail_timeout</code> window, after which round robin resumed.</p>
+<p><em>Single point of failure.</em> The primary nginx on Mac 2 remains the SPOF, and the primary DNS shares the same host. Removing it requires a second edge plus a mechanism that moves clients to it: DNS-based cutover (demonstrated next, limited by TTL), a VRRP/keepalived virtual IP (sub-second, no DNS change), or a managed multi-zone load balancer.</p>
+
+<h3>E. Standby Edge and DNS Cutover (Extension E)</h3>
+<p>Before any DNS change, the standby edge was tested with <code>curl --resolve</code>. This override pins the hostname to 10.7.2.16 without touching DNS, and the standby returned HTTP/1.1 200 with <code>X-Edge: mac3-standby</code> and <code>X-Upstream: 127.0.0.1:5001</code> (log EM). The <code>app</code> record was then changed to 10.7.2.16 on <em>both</em> resolvers, and client caches were flushed. With the primary nginx stopped (no listener on Mac 2:443), 6 of 6 requests succeeded through the standby (3 A, 3 B). Restoration reversed each step in order: restart nginx, check the listener and run <code>nginx -t</code>, restore both records, then send requests. The restored primary returned six HTTP/2 200 responses alternating A,&nbsp;B,&nbsp;A,&nbsp;B,&nbsp;A,&nbsp;B with <code>X-Edge: mac2-primary</code>. The cutover was manual. Because caches were flushed, the period in which a <em>cached</em> client still reaches the old edge was not separately recorded.</p>
+
+<h3>F. Packet-Level Verification</h3>
+<p>The capture on Mac 2's en0 lasted 44.7&nbsp;s and contains 3,859 frames (965,906 bytes, 0 dropped), most of it background traffic (mDNS, ARP, DHCP, QUIC). Filtering on the two project hosts isolates one complete transaction, with Mac 3 acting as the client. It is listed in Table IV and drawn in Fig. 2.</p>
+
+<div class="tbl span">
+<div class="tcap">Table IV<br>Frame-Level Trace of One Request (Capture on Mac 2, Times Relative to Capture Start)</div>
+<table>
+<thead><tr><th class="c">Frame</th><th>t (s)</th><th>Source &rarr; Destination</th><th>Protocol</th><th>Observation</th></tr></thead>
+<tbody>
+<tr><td class="c">2209</td><td>23.231772</td><td>10.7.2.16:59686 &rarr; 10.7.25.77:53</td><td>DNS/UDP</td><td>Standard query A <code>app.teamX.test</code> (client ephemeral port 59686)</td></tr>
+<tr><td class="c">2210</td><td>23.232102</td><td>10.7.25.77:53 &rarr; 10.7.2.16:59686</td><td>DNS/UDP</td><td>Response A 10.7.25.77; answered in 0.33 ms</td></tr>
+<tr><td class="c">2211&ndash;2218</td><td>23.2555&ndash;23.2916</td><td>10.7.2.16:56804 &harr; 10.7.25.77:443</td><td>TCP</td><td>Handshake followed directly by FIN; no payload. A TCP reachability probe, not the HTTPS session</td></tr>
+<tr><td class="c">2219</td><td>23.296409</td><td>10.7.2.16:56805 &rarr; 10.7.25.77:443</td><td>TCP</td><td>[SYN] ISN = 1362390663</td></tr>
+<tr><td class="c">2220</td><td>23.296895</td><td>10.7.25.77:443 &rarr; 10.7.2.16:56805</td><td>TCP</td><td>[SYN, ACK] ack = 1362390664 (ISN + 1)</td></tr>
+<tr><td class="c">2221</td><td>23.304287</td><td>10.7.2.16:56805 &rarr; 10.7.25.77:443</td><td>TCP</td><td>[ACK]: three-way handshake complete (client RTT &asymp; 7.9 ms)</td></tr>
+<tr><td class="c">2222</td><td>23.304289</td><td>client &rarr; edge</td><td>TLS</td><td>ClientHello, 324-byte TCP payload</td></tr>
+<tr><td class="c">2223</td><td>23.304455</td><td>edge &rarr; client</td><td>TCP</td><td>[ACK] ack = 1362390988 = 1362390664 + 324 (cumulative ACK)</td></tr>
+<tr><td class="c">2224</td><td>23.306791</td><td>edge &rarr; client</td><td>TLS</td><td>ServerHello flight (1448 B); Certificate, CertificateVerify and Finished are encrypted in TLS 1.3</td></tr>
+<tr><td class="c">2226&ndash;2227</td><td>23.314349</td><td>client &rarr; edge</td><td>TLS</td><td>ChangeCipherSpec (compatibility) + first encrypted record (client Finished)</td></tr>
+<tr><td class="c">2229&ndash;2237</td><td>23.3146&ndash;23.3257</td><td>client &harr; edge</td><td>TLS</td><td>Application Data only: the HTTP/2 request is not readable on the wire</td></tr>
+<tr><td class="c">2235 / 2239 / 2242</td><td>23.3162&ndash;23.3259</td><td>10.7.25.77:57923 &harr; 10.7.2.16:5002</td><td>TCP</td><td>Edge opens a new connection to Backend B: SYN, SYN-ACK, ACK</td></tr>
+<tr><td class="c">2243</td><td>23.325965</td><td>edge &rarr; Backend B</td><td>HTTP/1.1</td><td><code>GET /api/status HTTP/1.1</code> in plaintext: proof of TLS termination at the edge</td></tr>
+<tr><td class="c">2247</td><td>23.450194</td><td>Backend B &rarr; edge</td><td>HTTP/1.1</td><td><code>HTTP/1.1 200 OK</code>, 349 B (backend processing &asymp; 124 ms)</td></tr>
+<tr><td class="c">2249</td><td>23.450446</td><td>edge &rarr; client</td><td>TLS</td><td>Response re-encrypted to client (298 B); 218.7 ms after frame 2209</td></tr>
+<tr><td class="c">2252&ndash;2255</td><td>23.4623</td><td>client &harr; edge</td><td>TCP</td><td>Client FIN, edge ACK, then RST: connection torn down</td></tr>
+</tbody></table>
+</div>
+
+<figure class="span">
+<svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Packet sequence diagram">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+  <g font-size="11.5" text-anchor="middle">
+    <text x="110" y="16" font-weight="bold">Client 10.7.2.16:56805</text>
+    <text x="300" y="16" font-weight="bold">DNS 10.7.25.77:53</text>
+    <text x="470" y="16" font-weight="bold">nginx 10.7.25.77:443</text>
+    <text x="640" y="16" font-weight="bold">Backend B 10.7.2.16:5002</text>
+  </g>
+  <g stroke="#000" stroke-dasharray="3,3"><line x1="110" y1="24" x2="110" y2="262"/><line x1="300" y1="24" x2="300" y2="262"/><line x1="470" y1="24" x2="470" y2="262"/><line x1="640" y1="24" x2="640" y2="262"/></g>
+  <g stroke="#000" fill="none" marker-end="url(#a2)">
+    <line x1="110" y1="38" x2="298" y2="38"/><line x1="300" y1="52" x2="112" y2="52"/>
+    <line x1="110" y1="72" x2="468" y2="72"/><line x1="470" y1="84" x2="112" y2="84"/><line x1="110" y1="96" x2="468" y2="96"/>
+    <line x1="110" y1="114" x2="468" y2="114"/><line x1="470" y1="126" x2="112" y2="126"/><line x1="110" y1="138" x2="468" y2="138"/>
+    <line x1="110" y1="156" x2="468" y2="156"/>
+    <line x1="470" y1="170" x2="638" y2="170"/><line x1="640" y1="182" x2="472" y2="182"/>
+    <line x1="470" y1="198" x2="638" y2="198"/><line x1="640" y1="218" x2="472" y2="218"/>
+    <line x1="470" y1="238" x2="112" y2="238"/>
+  </g>
+  <g font-size="10.5">
+    <text x="204" y="35" text-anchor="middle">2209 query A app.teamX.test</text>
+    <text x="204" y="49" text-anchor="middle">2210 A 10.7.25.77 (0.33 ms)</text>
+    <text x="289" y="69" text-anchor="middle">2219 SYN</text>
+    <text x="289" y="81" text-anchor="middle">2220 SYN-ACK</text>
+    <text x="289" y="93" text-anchor="middle">2221 ACK</text>
+    <text x="289" y="111" text-anchor="middle">2222 TLS ClientHello</text>
+    <text x="289" y="123" text-anchor="middle">2224 ServerHello + encrypted Cert/Finished</text>
+    <text x="289" y="135" text-anchor="middle">2226-2227 CCS + Finished</text>
+    <text x="289" y="153" text-anchor="middle">2232-2233 HTTP/2 request (encrypted)</text>
+    <text x="555" y="167" text-anchor="middle">2235 SYN</text>
+    <text x="555" y="179" text-anchor="middle">2239 SYN-ACK / 2242 ACK</text>
+    <text x="555" y="195" text-anchor="middle">2243 GET /api/status (plain)</text>
+    <text x="555" y="215" text-anchor="middle">2247 HTTP/1.1 200 OK (124 ms)</text>
+    <text x="289" y="235" text-anchor="middle">2249 response (encrypted) &#183; t = 218.7 ms</text>
+  </g>
+</svg>
+<figcaption>Fig. 2. Sequence diagram reconstructed from the capture (frame numbers from Table IV). The DNS lookup precedes, and is independent of, the TCP connection. Everything between client and edge after frame 2224 is encrypted, while the edge&ndash;backend exchange is readable. Mac 3 is both the client and the backend host, so the lifelines are distinct sockets, not distinct machines.</figcaption>
+</figure>
+
+<p>Three observations follow from the trace. First, <em>ordering</em>: resolution (2209&ndash;2210) completes before the first SYN (2219), so DNS and the connection are separate steps. Second, <em>reliability</em>: the server's acknowledgement number advances by exactly the number of payload bytes received (+324 after the ClientHello), which is TCP's cumulative byte-stream acknowledgement [3]. Third, <em>termination</em>: in TLS 1.3 only the ClientHello and ServerHello are readable. The server certificate is sent encrypted [4], so in this trace certificate validation is shown by <code>openssl s_client</code> (verify return code 0) rather than by a cleartext Certificate frame. The edge then issues a new, plaintext HTTP/1.1 request to the backend, which confirms the boundary drawn in Fig. 1.</p>
+
+<h3>G. HTTP Caching</h3>
+<p>Both backends returned <code>Cache-Control: max-age=60</code> with an ETag on <code>/</code> and <code>no-store</code> on <code>/api/status</code>. The same header passed through the edge (HTTP/2 200). A conditional request carrying the matching <code>If-None-Match</code> returned <code>304 Not Modified</code> with no body (log CA) [6]. A <em>fresh hit</em> is served from the local cache with no request at all. A <em>conditional request</em> costs a round trip but no body. A <em>full request</em> transfers the whole representation. Under round robin, A and B produce different bodies and therefore different ETags, so a validator issued by one backend matches only when the conditional request reaches that same backend.</p>
+
+<h3>H. Consolidated Test Results</h3>
+<p class="noindent">Table V lists every test that was run, with its outcome and its evidence source. Items that were not performed are marked as pending rather than omitted.</p>
+
+<div class="tbl span">
+<div class="tcap">Table V<br>Phase 2 Test Results (EM = Edge Migration, HL = Healthy Layer Diagnostics, BF = Backend Failure, FW = Firewall, DNS = DNS TTL, CA = Caching, WS = Wireshark, SC = Showcase logs)</div>
+<table>
+<thead><tr><th class="c">#</th><th>Ext.</th><th>Test</th><th>Expected</th><th>Observed</th><th>Status</th><th>Log</th></tr></thead>
+<tbody>
+<tr><td class="c">1</td><td>A</td><td>Query primary DNS</td><td>A 10.7.25.77</td><td>A 10.7.25.77, TTL 60 (app and api)</td><td class="pass">Pass</td><td>EM, HL</td></tr>
+<tr><td class="c">2</td><td>A</td><td>Query backup DNS</td><td>Same record</td><td>A 10.7.25.77, TTL 60 (app and api)</td><td class="pass">Pass</td><td>EM, HL</td></tr>
+<tr><td class="c">3</td><td>A</td><td>Primary DNS stopped</td><td>Backup still answers</td><td>Direct backup queries answered</td><td class="pass">Pass</td><td>SC</td></tr>
+<tr><td class="c">4</td><td>A</td><td>OS resolver falls back automatically</td><td>System lookup via backup</td><td>Not conclusively isolated</td><td class="pend">Partial</td><td>&ndash;</td></tr>
+<tr><td class="c">5</td><td>B</td><td>Authoritative TTL</td><td>Fixed value</td><td>60 on every query</td><td class="pass">Pass</td><td>DNS</td></tr>
+<tr><td class="c">6</td><td>B</td><td>Cached TTL countdown and expiry</td><td>Decrements, then refresh</td><td>151 &rarr; 141 &rarr; 131; refreshed after 135 s</td><td class="pass">Pass</td><td>DNS</td></tr>
+<tr><td class="c">7</td><td>B</td><td>Project record change held until TTL expiry</td><td>Old IP &le; 60 s, then new</td><td>Not separately recorded</td><td class="pend">Pending</td><td>&ndash;</td></tr>
+<tr><td class="c">8</td><td>C</td><td>Edge &rarr; backends with PF active</td><td>Allowed</td><td>200 / 200; HTTP/2 200; LB 3/3</td><td class="pass">Pass</td><td>FW</td></tr>
+<tr><td class="c">9</td><td>C</td><td>Unauthorized source (allow rule removed)</td><td>Blocked</td><td>Timeout on 5001 and 5002; rules restored</td><td class="pass">Pass</td><td>FW</td></tr>
+<tr><td class="c">10</td><td>C</td><td>Third-device / IPv6 source</td><td>Blocked</td><td>No third device available</td><td class="pend">Pending</td><td>&ndash;</td></tr>
+<tr><td class="c">11</td><td>D</td><td>Round robin, both healthy</td><td>A/B alternate</td><td>A, B, A, B, A, B (6/6 HTTP/2 200)</td><td class="pass">Pass</td><td>EM, SC</td></tr>
+<tr><td class="c">12</td><td>D</td><td>Backend A stopped</td><td>All requests via B</td><td>6/6 200 from B; retry visible in X-Upstream</td><td class="pass">Pass</td><td>BF</td></tr>
+<tr><td class="c">13</td><td>D</td><td>Backend A restarted</td><td>Distribution resumes</td><td>B, B, A, B, A, B (6/6 200)</td><td class="pass">Pass</td><td>BF</td></tr>
+<tr><td class="c">14</td><td>E</td><td>Standby edge via <code>--resolve</code></td><td>Serves app</td><td>HTTP/1.1 200, X-Edge mac3-standby</td><td class="pass">Pass</td><td>EM</td></tr>
+<tr><td class="c">15</td><td>E</td><td>Primary edge stopped after DNS cutover</td><td>Service continues</td><td>6/6 via standby (3 A / 3 B)</td><td class="pass">Pass</td><td>EM</td></tr>
+<tr><td class="c">16</td><td>E</td><td>Cached client reaches old edge until TTL expiry</td><td>Delayed switch</td><td>Caches flushed; not recorded</td><td class="pend">Pending</td><td>&ndash;</td></tr>
+<tr><td class="c">17</td><td>E</td><td>Primary edge and DNS restored</td><td>Primary serves</td><td>6/6 HTTP/2 200, X-Edge mac2-primary</td><td class="pass">Pass</td><td>EM</td></tr>
+<tr><td class="c">18</td><td>&ndash;</td><td>TLS validation</td><td>Trusted chain</td><td>TLS 1.3, AES-256-GCM, verify return code 0</td><td class="pass">Pass</td><td>HL</td></tr>
+<tr><td class="c">19</td><td>&ndash;</td><td>Conditional GET</td><td>304</td><td>304 Not Modified, matching ETag</td><td class="pass">Pass</td><td>CA</td></tr>
+<tr><td class="c">20</td><td>&ndash;</td><td>Wrong destination port (444)</td><td>Refused</td><td>443 succeeded; 444 refused</td><td class="pass">Pass</td><td>operator</td></tr>
+<tr><td class="c">21</td><td>&ndash;</td><td>Packet trace DNS &rarr; TCP &rarr; TLS &rarr; HTTP</td><td>All layers visible</td><td>Frames 2209&ndash;2255 (Table IV)</td><td class="pass">Pass</td><td>WS</td></tr>
+<tr><td class="c">22</td><td>F</td><td>Faculty-injected fault</td><td>Layer identified</td><td>Scheduled for evaluation</td><td class="pend">Pending</td><td>&ndash;</td></tr>
+</tbody></table>
+</div>
+
+<h2>VII. Troubleshooting Findings</h2>
+<p>The team used a fixed ladder that follows the request path: (1) <code>dig</code> against each resolver, (2) <code>ping</code> the resolved address, (3) <code>nc -vz</code> to the service port, (4) <code>openssl s_client -servername</code> with the CA, (5) <code>curl -v</code> while reading the edge headers, and (6) the nginx error log and <code>pfctl -sr</code>. The first failing rung identifies the layer. Two distinctions proved useful. A TCP <em>refusal</em> (port 444) means the host is up but nothing is listening, whereas a <em>timeout</em> (the PF test) means packets are being dropped. An HTTP 502 means DNS, TCP and TLS to the edge all succeeded and the fault lies behind the edge.</p>
+<p>During one restoration sequence a transient HTTP 502 occurred. The nginx log reported a route-related upstream connection error. Direct backend checks passed shortly afterwards, and later requests succeeded without a configuration change. The cause was not established; a temporary Wi-Fi reachability loss between the hosts is plausible but unproven. The incident showed that a single 502 identifies the <em>affected boundary</em>, edge to upstream, but not its <em>root cause</em>.</p>
+
+<h2>VIII. Learning Summary</h2>
+<p><em>Extension A.</em> Redundant name service is only as good as the client's willingness to use it. Configuring a second server and showing that it answers are separate claims from showing that the operating system's resolver switches to it, and the evidence for each has to be collected separately.</p>
+<p><em>Extension B.</em> TTL is decided by the authoritative server but enforced by caches. The constant 60 at the source and the falling 151&nbsp;&rarr;&nbsp;131 in a cache are the same mechanism seen from two sides. This explains why a DNS migration is planned around the TTL that was in place <em>before</em> the change.</p>
+<p><em>Extension C.</em> A stateful filter with ordered <code>quick</code> rules enforces "only the edge may reach the backends" without any change to the application. The choice between drop and return decides whether a blocked client sees a timeout or a refusal, and that difference is itself a diagnostic signal.</p>
+<p><em>Extension D.</em> Passive health checking hides a dead backend from clients at the cost of one failed attempt per <code>fail_timeout</code> window. The <code>X-Upstream</code> retry list and the B,&nbsp;B,&nbsp;A recovery pattern made this internal behaviour visible from the outside.</p>
+<p><em>Extension E.</em> A standby edge removes the SPOF only if clients can be moved to it. DNS can move them, but only as fast as their caches allow. The <code>--resolve</code> pre-check showed that the standby can be validated before production traffic depends on it.</p>
+<p><em>Extension F.</em> Working bottom-up along the request path, from name to address to port to TLS to HTTP, turns "it doesn't work" into a specific layer. Rehearsing it against the failure cases of Section VII prepared the team for the injected fault.</p>
+
+<h2>IX. Limitations and Future Work</h2>
+<ol>
+<li>Automatic OS-level DNS fallback was not conclusively isolated. Future work: a capture during a primary outage showing the query moving to 10.7.2.16.</li>
+<li>Ext. B/E TTL-delayed cutover for a <em>cached</em> client is not yet logged. Future work: poll with <code>curl</code> during a record change without flushing.</li>
+<li>Isolation was verified using the edge itself as the unauthorized source. Future work: a third device and an IPv6 source.</li>
+<li>Edge failover is manual and the backend checks are passive. Future work: active probes and a keepalived virtual IP.</li>
+<li>The standby edge serves HTTP/1.1 only. Future work: enable <code>http2 on</code> for parity with the primary.</li>
+<li>Primary DNS and the primary edge share one host. Future work: separate hosts, or move the primary DNS to Mac 3.</li>
+</ol>
+
+<h2>X. Conclusion</h2>
+<p>Phase 2 turned a working private service into one whose behaviour under failure is measured. Backend loss caused no client-visible errors, and the nginx retry could be traced through response headers. A standby edge carried all traffic while the primary was down. A PF anchor restricted the backends to the edge, and backup DNS kept names resolvable when the primary resolver stopped. A single frame-numbered trace showed how DNS, TCP, TLS 1.3 and the plaintext proxied HTTP request fit together, including the point where encryption ends. The remaining gaps are documented with the specific experiment that would close each one: automatic resolver fallback, cached-client TTL delay, and third-device isolation.</p>
+
+<div class="refs">
+<h2>References</h2>
+<ol>
+<li>P. Mockapetris, &ldquo;Domain names&mdash;Concepts and facilities,&rdquo; IETF RFC 1034, Nov. 1987.</li>
+<li>P. Mockapetris, &ldquo;Domain names&mdash;Implementation and specification,&rdquo; IETF RFC 1035, Nov. 1987.</li>
+<li>W. Eddy, Ed., &ldquo;Transmission Control Protocol (TCP),&rdquo; IETF RFC 9293, Aug. 2022.</li>
+<li>E. Rescorla, &ldquo;The Transport Layer Security (TLS) Protocol Version 1.3,&rdquo; IETF RFC 8446, Aug. 2018.</li>
+<li>R. Fielding, M. Nottingham, and J. Reschke, Eds., &ldquo;HTTP Semantics,&rdquo; IETF RFC 9110, Jun. 2022.</li>
+<li>R. Fielding, M. Nottingham, and J. Reschke, Eds., &ldquo;HTTP Caching,&rdquo; IETF RFC 9111, Jun. 2022.</li>
+<li>M. Thomson and C. Benfield, Eds., &ldquo;HTTP/2,&rdquo; IETF RFC 9113, Jun. 2022.</li>
+<li>NGINX, &ldquo;Module ngx_http_upstream_module.&rdquo; [Online]. Available: https://nginx.org/en/docs/http/ngx_http_upstream_module.html</li>
+<li>S. Kelley, &ldquo;dnsmasq(8) manual page.&rdquo; [Online]. Available: https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html</li>
+<li>OpenBSD, &ldquo;pf.conf(5): Packet filter configuration file.&rdquo; [Online]. Available: https://man.openbsd.org/pf.conf</li>
+<li>Wireshark Foundation, &ldquo;Wireshark User&rsquo;s Guide.&rdquo; [Online]. Available: https://www.wireshark.org/docs/wsug_html_chunked/</li>
+<li>D. Cooper <i>et al.</i>, &ldquo;Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile,&rdquo; IETF RFC 5280, May 2008.</li>
+<li>NGINX, &ldquo;Module ngx_http_proxy_module.&rdquo; [Online]. Available: https://nginx.org/en/docs/http/ngx_http_proxy_module.html</li>
+</ol>
+</div>
+
+<h2>Appendix A: Evidence Inventory</h2>
+<div class="tbl">
+<table>
+<thead><tr><th>Key</th><th>File (under <code>Evidence/</code>)</th></tr></thead>
+<tbody>
+<tr><td>DNS</td><td>DNS/TeamX_DNS_TTL_Evidence.txt</td></tr>
+<tr><td>WS</td><td>Wireshark/TeamX_CN_Capture.pcap; TeamX_Wireshark_Evidence.txt</td></tr>
+<tr><td>CA</td><td>Caching/TeamX_Caching_Evidence.txt</td></tr>
+<tr><td>FW</td><td>Firewall/TeamX_Firewall_Evidence.txt</td></tr>
+<tr><td>HL</td><td>Failover/TeamX_Healthy_Layer_Diagnostics.txt</td></tr>
+<tr><td>BF</td><td>Failover/TeamX_Backend_Failure_Recovery_Evidence.txt</td></tr>
+<tr><td>EM</td><td>Failover/TeamX_Edge_Migration_Evidence_20261125_030935.txt</td></tr>
+<tr><td>SC</td><td>Showcase/ (Mac 2 and Mac 3 scripts and run logs)</td></tr>
+<tr><td>LAN</td><td>LAN/01_mac3_inventory_ping.txt</td></tr>
+</tbody></table>
+</div>
+
+<h2>Appendix B: Configuration Bundle</h2>
+<p class="noindent"><code>Config/mac3/</code>: <code>nginx-teamX-standby.conf</code>, <code>dnsmasq-backup.conf</code>, <code>pf-anchor-teamx.conf</code>, and the <code>pf.conf</code> anchor lines. <code>Config/mac2/</code>: the primary <code>teamX.conf</code>, the primary dnsmasq configuration, the Phase 1 <code>teamX.conf</code> (from the pre-Phase-2 <code>nginx -T</code> dump) and the client resolver settings. <code>Config/tls/</code>: the CA and server certificates (public parts only). Backend source: <code>backend1/</code> and <code>backend2/</code> (start each with <code>node index.js</code>). PF rollback: remove the <code>load anchor "com.apple/teamx"</code> line, then run <code>sudo pfctl -f /etc/pf.conf</code>.</p>
+
+</div><!-- /cols -->
+</div>
+</body>
+</html>

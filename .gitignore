@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# dependencies (reinstall with `npm install`)
+node_modules/
+node_modules */
+
+# private keys must never be committed
+*.key
+
+# local tool state
+.impeccable/

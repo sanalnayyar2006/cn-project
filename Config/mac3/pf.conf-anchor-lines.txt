@@ -1,0 +1,11 @@
+11:# as the nested anchors rely on the anchor point defined here. In addition,
+12:# to the anchors loaded by this file, some system services would dynamically 
+13:# insert anchors into the main ruleset. These anchors will be added only when
+20:# com.apple anchor point
+22:scrub-anchor "com.apple/*"
+23:nat-anchor "com.apple/*"
+24:rdr-anchor "com.apple/*"
+25:dummynet-anchor "com.apple/*"
+26:anchor "com.apple/*"
+27:load anchor "com.apple" from "/etc/pf.anchors/com.apple"
+28:load anchor "com.apple/teamx" from "/etc/pf.anchors/teamx"

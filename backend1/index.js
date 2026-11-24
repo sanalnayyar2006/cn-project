@@ -10,6 +10,12 @@ app.get("/",(req,res)=>{
 })
 })
 
+app.get("/api/status",(req,res)=>{
+  res.set("X-Backend","A");
+  res.set("Cache-Control","no-store");
+  res.json({ backend: "A", status: "ok", port: 5001, time: new Date().toISOString() })
+})
+
 app.listen(5001,()=>{
 console.log("server A up and running on http://localhost:5001")
 })
