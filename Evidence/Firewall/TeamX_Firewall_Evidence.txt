@@ -1,0 +1,40 @@
+TEAM X - FIREWALL AND SERVICE ISOLATION EVIDENCE
+Date: 25 November 2026
+
+1. FIREWALL ARCHITECTURE
+Mac 3: 10.7.2.16
+Mac 2: 10.7.25.77
+
+2. CONFIGURED PF RULES
+Allow inbound TCP from Mac 2 to Backend A (5001).
+Allow inbound TCP from Mac 2 to Backend B (5002).
+Block other IPv4 sources from Backend A (5001).
+Block other IPv4 sources from Backend B (5002).
+
+3. ALLOWED ACCESS TEST
+Mac 2 -> Backend A: HTTP 200
+Mac 2 -> Backend B: HTTP 200
+Mac 2 -> nginx HTTPS: HTTP/2 200
+
+4. LOAD BALANCING AFTER FIREWALL ACTIVATION
+Six HTTPS requests succeeded.
+Backend A handled three requests.
+Backend B handled three requests.
+
+5. BLOCKING TEST
+Temporarily replaced the allow-and-block rules with a block-all
+rule for TCP ports 5001 and 5002.
+From Mac 2, both connection attempts timed out.
+This demonstrated that PF can block access to both backend ports.
+The original four rules were subsequently restored and reloaded.
+
+6. RECOVERY
+Backend A direct request: HTTP 200.
+Backend B direct request: HTTP 200.
+HTTPS through nginx: HTTP/2 200.
+Original PF rules verified after restoration.
+
+7. LIMITATIONS
+No third LAN device was available for an independent unauthorized-source test.
+The blocking test used Mac 2 after temporarily removing its allow rule.
+Current rules explicitly cover IPv4; IPv6 isolation has not yet been verified.
