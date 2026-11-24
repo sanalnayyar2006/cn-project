@@ -1,0 +1,79 @@
+==================================================
+       TEAM X - PHASE 2 MAC 3 SHOWCASE
+==================================================
+Date: Wed Nov 25 01:27:41 IST 2026
+Mac 3: 10.7.2.16
+Mac 2: 10.7.25.77
+Log: /Users/pexy/Desktop/TeamX_Mac3_Showcase_20261125_012741.txt
+
+1. MAC 3 NETWORK CONNECTIVITY
+--------------------------------------------------
+[PASS] Mac 3 can reach Mac 2
+[PASS] Mac 3 local network interface reachable
+
+2. BACKUP DNS SERVER
+--------------------------------------------------
+[PASS] Mac 3 DNS resolves app.teamX.test to 10.7.25.77
+[PASS] Mac 3 DNS resolves api.teamX.test to 10.7.25.77
+[PASS] Mac 3 DNS forwards external queries
+[PASS] Mac 2 primary DNS responds
+
+3. MAC 3 DNS SERVICE
+--------------------------------------------------
+[PASS] Local dnsmasq answers on Mac 3
+[FAIL] dnsmasq port 53 listener
+
+4. BACKEND A AND B
+--------------------------------------------------
+[PASS] Backend A operational on port 5001
+{"backend":"A","status":"ok","port":5001,"time":"2026-11-24T19:57:44.038Z"}[PASS] Backend B operational on port 5002
+{"backend":"B","status":"ok","port":5002,"time":"2026-11-24T19:57:44.079Z"}
+5. MAC 2 HTTPS EDGE
+--------------------------------------------------
+[PASS] Mac 3 reaches Mac 2 HTTPS application
+x-edge: mac2-primary
+x-backend: A
+{"backend":"A","status":"ok","port":5001,"time":"2026-11-24T19:57:44.158Z"}
+6. LOAD BALANCING THROUGH MAC 2
+--------------------------------------------------
+Request 1: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Request 2: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Request 3: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Request 4: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Request 5: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Request 6: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Backend A requests: 3
+Backend B requests: 3
+[PASS] Both backends reached through nginx
+
+7. SERVICE AND ARCHITECTURE INFORMATION
+--------------------------------------------------
+Mac 3 IP configuration:
+	inet 10.7.2.16 netmask 0xffffe000 broadcast 10.7.31.255
+
+Backend listeners:
+COMMAND  PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    1154 pexy   16u  IPv6 0x1f303a1412ff7d8b      0t0  TCP *:5001 (LISTEN)
+node    1232 pexy   16u  IPv6 0xddf5e2e6d41c2199      0t0  TCP *:5002 (LISTEN)
+
+DNS listener:
+
+8. OTHER DEMONSTRATIONS
+--------------------------------------------------
+[PENDING / INFO] Backend A outage and Backend B recovery: perform separately
+[PENDING / INFO] DNS TTL and cache expiry: perform separately
+[PENDING / INFO] Wireshark DNS, TCP and TLS packet capture: pending
+[PENDING / INFO] Firewall-based service isolation: pending
+[PENDING / INFO] Standby nginx edge migration: pending
+[PENDING / INFO] Injected fault troubleshooting: pending
+
+==================================================
+             MAC 3 FINAL SUMMARY
+==================================================
+Passed: 11
+Failed: 1
+Pending / informational: 6
+
+Report saved at:
+/Users/pexy/Desktop/TeamX_Mac3_Showcase_20261125_012741.txt
+==================================================

@@ -1,0 +1,82 @@
+==================================================
+          TEAM X - PHASE 2 SHOWCASE
+==================================================
+Date: Wed Nov 25 01:26:44 IST 2026
+Mac 2: 10.7.25.77
+Mac 3: 10.7.2.16
+Log: /Users/aarsh.user/Desktop/TeamX_Showcase_20261125_012644.txt
+
+1. DNS SERVER TESTS
+--------------------------------------------------
+[PASS] DNS 10.7.25.77 resolves app.teamX.test to 10.7.25.77
+[PASS] DNS 10.7.25.77 resolves an external domain
+[PASS] DNS 10.7.2.16 resolves app.teamX.test to 10.7.25.77
+[PASS] DNS 10.7.2.16 resolves an external domain
+[PASS] macOS system resolver resolves app.teamX.test
+[PASS] macOS system resolver resolves api.teamX.test
+
+2. TLS CERTIFICATE VALIDATION
+--------------------------------------------------
+/Users/aarsh.user/cn-phase2/tls/app.teamX.test.crt: OK
+[PASS] Application certificate verifies against TeamX CA
+
+3. DIRECT BACKEND TESTS
+--------------------------------------------------
+[PASS] Backend A responds on port 5001
+{"backend":"A","status":"ok","port":5001,"time":"2026-11-24T19:56:45.495Z"}[PASS] Backend B responds on port 5002
+{"backend":"B","status":"ok","port":5002,"time":"2026-11-24T19:56:45.584Z"}
+4. HTTPS APPLICATION TESTS
+--------------------------------------------------
+[PASS] HTTPS app.teamX.test returns HTTP 200
+x-edge: mac2-primary
+x-backend: A
+{"backend":"A","status":"ok","port":5001,"time":"2026-11-24T19:56:45.658Z"}[PASS] HTTPS api.teamX.test returns HTTP 200
+x-edge: mac2-primary
+x-backend: B
+{"backend":"B","status":"ok","port":5002,"time":"2026-11-24T19:56:45.838Z"}
+5. LOAD BALANCING TEST - SIX REQUESTS
+--------------------------------------------------
+Request 1: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Request 2: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Request 3: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Request 4: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Request 5: HTTP 200 | Backend A | x-upstream: 10.7.2.16:5001
+Request 6: HTTP 200 | Backend B | x-upstream: 10.7.2.16:5002
+Backend A requests: 3
+Backend B requests: 3
+[PASS] Load balancing reached both backends
+
+6. HTTP CACHE HEADER INSPECTION
+--------------------------------------------------
+Observed: cache-control: no-store
+[PENDING / INFO] Application currently sends no-store; HTTP caching is not demonstrated
+
+7. HISTORICAL FAILURE TEST EVIDENCE
+--------------------------------------------------
+[PENDING / INFO] Backend B outage: previously tested; six successful responses through A
+[PENDING / INFO] Primary DNS outage: previously tested; application remained accessible
+[PENDING / INFO] These are previous test results, not re-executed by this script
+
+8. REMAINING MANUAL DEMONSTRATIONS
+--------------------------------------------------
+[PENDING / INFO] Wireshark: DNS, TCP handshake and TLS handshake capture
+[PENDING / INFO] DNS TTL: record change, cache observation and expiry
+[PENDING / INFO] Service isolation: firewall restriction of direct backend access
+[PENDING / INFO] Backend A outage: verify Backend B serves requests
+[PENDING / INFO] Edge migration: standby nginx and DNS cutover
+[PENDING / INFO] Injected fault: demonstrate troubleshooting
+
+==================================================
+             FINAL SHOWCASE SUMMARY
+==================================================
+Passed live checks: 12
+Failed live checks: 0
+Pending / informational: 10
+
+Previous failover evidence:
+- Backend B stopped -> Backend A served requests
+- Primary DNS stopped -> application remained accessible
+
+Full output saved at:
+/Users/aarsh.user/Desktop/TeamX_Showcase_20261125_012644.txt
+==================================================
