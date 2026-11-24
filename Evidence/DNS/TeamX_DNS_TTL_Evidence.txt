@@ -1,0 +1,32 @@
+TEAM X - DNS TTL AND CACHE EVIDENCE
+Date: 25 November 2026
+
+1. PRIVATE DNS RESOLUTION
+app.teamX.test -> 10.7.25.77
+
+2. PRIMARY DNS
+10.7.25.77
+Configured local-ttl=60
+Observed TTL=60
+
+3. BACKUP DNS
+10.7.2.16
+Configured local-ttl=60
+Observed TTL=60
+
+4. FORWARDED DNS CACHE COUNTDOWN
+example.com:
+02:09:56 - TTL 151
+02:10:06 - TTL 141
+02:10:16 - TTL 131
+
+5. CACHE EXPIRY AND REFRESH
+After waiting 135 seconds:
+02:13:12 - TTL 104
+02:13:18 - TTL 98
+
+Conclusion:
+Both DNS servers provide private-domain resolution with
+a 60-second local TTL. Primary dnsmasq also demonstrates
+forwarded DNS caching, TTL countdown, and refreshed
+responses after the previous cached response expires.
