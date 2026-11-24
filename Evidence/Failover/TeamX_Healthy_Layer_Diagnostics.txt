@@ -1,0 +1,41 @@
+TEAM X - HEALTHY SYSTEM LAYER DIAGNOSTICS
+Wed Nov 25 03:12:37 IST 2026
+
+===== DNS =====
+
+; <<>> DiG 9.10.6 <<>> @10.7.25.77 app.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamX.test.		60	IN	A	10.7.25.77
+
+; <<>> DiG 9.10.6 <<>> @10.7.2.16 app.teamX.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamX.test.		60	IN	A	10.7.25.77
+
+===== TCP =====
+Connection to 10.7.25.77 port 443 [tcp/https] succeeded!
+Connection to 10.7.2.16 port 5001 [tcp/commplex-link] succeeded!
+Connection to 10.7.2.16 port 5002 [tcp/rfe] succeeded!
+
+===== TLS =====
+Verification: OK
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+Verify return code: 0 (ok)
+
+===== HTTP APPLICATION =====
+HTTP/2 200 
+server: nginx/1.31.6
+date: Tue, 24 Nov 2026 21:42:37 GMT
+content-type: application/json; charset=utf-8
+content-length: 75
+x-powered-by: Express
+x-backend: B
+cache-control: no-store
+etag: W/"4b-sIHVL/u2qdZ06q70izHocPtLmtY"
+x-edge: mac2-primary
+x-upstream: 10.7.2.16:5002
+
+{"backend":"B","status":"ok","port":5002,"time":"2026-11-24T21:42:37.829Z"}
+DIAGNOSTIC RESULT: DNS, TCP, TLS AND HTTP VERIFIED

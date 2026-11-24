@@ -1,0 +1,68 @@
+TEAM X - BACKEND FAILURE AND RECOVERY EVIDENCE
+==============================================
+
+Test type: Controlled backend failure and recovery
+Primary edge: Mac 2 (10.7.25.77)
+Backend host: Mac 3 (10.7.2.16)
+
+1. NORMAL OPERATION
+-------------------
+Backend A: TCP port 5001 - HTTP 200
+Backend B: TCP port 5002 - HTTP 200
+Primary HTTPS edge: HTTP/2 200
+Both backends were receiving traffic.
+
+2. BACKEND A FAILURE
+--------------------
+Backend A on port 5001 was stopped manually.
+
+Direct request to Backend A:
+Connection failed:
+Could not connect to server.
+
+Direct request to Backend B:
+HTTP 200 OK
+Backend: B
+Port: 5002
+
+3. AUTOMATIC FAILOVER
+---------------------
+Six HTTPS requests were sent through the primary nginx edge.
+
+All six returned HTTP/2 200.
+All six were served by Backend B.
+
+One request showed:
+X-Upstream: 10.7.2.16:5001, 10.7.2.16:5002
+
+This indicates nginx attempted Backend A and retried Backend B.
+
+4. BACKEND A RECOVERY
+--------------------
+Backend A was restarted on Mac 3.
+
+Direct request to port 5001:
+HTTP 200 OK
+Backend: A
+Port: 5001
+
+5. LOAD BALANCING AFTER RECOVERY
+--------------------------------
+Six HTTPS requests were sent through the primary edge.
+
+Observed backend sequence:
+B, B, A, B, A, B
+
+All six returned HTTP/2 200.
+Both Backend A and Backend B successfully served requests.
+
+6. CONCLUSION
+-------------
+The system demonstrated:
+- Backend A failure detection through a failed upstream connection.
+- Continued service through Backend B.
+- Successful HTTPS responses during Backend A failure.
+- Backend A recovery.
+- Restoration of traffic distribution across both backends.
+
+Evidence type: Operator-observed test results recorded after execution.
